@@ -1,4 +1,4 @@
-module github.com/simpleforce/simpleforce
+module github.com/Vorlon-inc/simpleforce
 
 go 1.18
 
