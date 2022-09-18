@@ -32,8 +32,9 @@ type Client struct {
 		fullName string
 		email    string
 	}
-	clientID      string
-	apiVersion    string
+	clientID string
+	//ApiVersion holds the client API version
+	ApiVersion    string
 	baseURL       string
 	instanceURL   string
 	useToolingAPI bool
@@ -81,7 +82,7 @@ func (client *Client) Query(q string) (*QueryResult, error) {
 		if client.useToolingAPI {
 			formatString = strings.Replace(formatString, "query", "tooling/query", -1)
 		}
-		u = fmt.Sprintf(formatString, baseURL, client.apiVersion, url.QueryEscape(q))
+		u = fmt.Sprintf(formatString, baseURL, client.ApiVersion, url.QueryEscape(q))
 	}
 
 	data, err := client.httpRequest("GET", u, nil)
@@ -164,7 +165,7 @@ func (client *Client) LoginPassword(username, password, token string) error {
         </env:Envelope>`
 	soapBody = fmt.Sprintf(soapBody, client.clientID, username, html.EscapeString(password), token)
 
-	url := fmt.Sprintf("%s/services/Soap/u/%s", client.baseURL, client.apiVersion)
+	url := fmt.Sprintf("%s/services/Soap/u/%s", client.baseURL, client.ApiVersion)
 	req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(soapBody))
 	if err != nil {
 		log.Println(logPrefix, "error occurred creating request,", err)
@@ -256,15 +257,15 @@ func (client *Client) httpRequest(method, url string, body io.Reader) ([]byte, e
 
 // makeURL generates a REST API URL based on baseURL, APIVersion of the client.
 func (client *Client) makeURL(req string) string {
-	client.apiVersion = strings.Replace(client.apiVersion, "v", "", -1)
-	retURL := fmt.Sprintf("%s/services/data/v%s/%s", client.instanceURL, client.apiVersion, req)
+	client.ApiVersion = strings.Replace(client.ApiVersion, "v", "", -1)
+	retURL := fmt.Sprintf("%s/services/data/v%s/%s", client.instanceURL, client.ApiVersion, req)
 	return retURL
 }
 
 // NewClient creates a new instance of the client.
 func NewClient(url, clientID, apiVersion string) *Client {
 	client := &Client{
-		apiVersion: apiVersion,
+		ApiVersion: apiVersion,
 		baseURL:    url,
 		clientID:   clientID,
 		httpClient: &http.Client{},
@@ -282,13 +283,13 @@ func (client *Client) SetHttpClient(c *http.Client) {
 
 // DownloadFile downloads a file based on the REST API path given. Saves to filePath.
 func (client *Client) DownloadFile(contentVersionID string, filepath string) error {
-	apiPath := fmt.Sprintf("/services/data/v%s/sobjects/ContentVersion/%s/VersionData", client.apiVersion, contentVersionID)
+	apiPath := fmt.Sprintf("/services/data/v%s/sobjects/ContentVersion/%s/VersionData", client.ApiVersion, contentVersionID)
 	return client.Download(apiPath, filepath)
 }
 
 //DownloadAttachment downloads a file
 func (client *Client) DownloadAttachment(attachmentId string, filepath string) error {
-	apiPath := fmt.Sprintf("/services/data/v%s/sobjects/Attachment/%s/Body", client.apiVersion, attachmentId)
+	apiPath := fmt.Sprintf("/services/data/v%s/sobjects/Attachment/%s/Body", client.ApiVersion, attachmentId)
 	return client.Download(apiPath, filepath)
 }
 
@@ -338,7 +339,7 @@ func parseHost(input string) string {
 
 //Get the List of all available objects and their metadata for your organization's data
 func (client *Client) DescribeGlobal() (*SObjectMeta, error) {
-	apiPath := fmt.Sprintf("/services/data/v%s/sobjects", client.apiVersion)
+	apiPath := fmt.Sprintf("/services/data/v%s/sobjects", client.ApiVersion)
 	baseURL := strings.TrimRight(client.baseURL, "/")
 	url := fmt.Sprintf("%s%s", baseURL, apiPath) // Get the objects
 	httpClient := client.httpClient
